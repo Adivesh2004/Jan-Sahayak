@@ -1,0 +1,70 @@
+venv/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Environment Variables (CRITICAL - Contains API Keys)
+.env
+*.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Vector Databases (Large Files)
+chromadb/
+faiss_index/
+*.faiss
+chroma_db.zip
+
+# LangSmith Cache
+.langsmith/
+.langchain/
+
+# Agent Credentials (Sensitive)
+zynd_agents_cred/
+*.json
+!package.json
+identity_credential.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Session Data
+*.session
+session_*.json
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+advocacy.json
+logs/
