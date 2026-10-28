@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Zynd Personalized Results Page</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.0.0/dist/markdown-it.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b203b",
+                        "background-light": "#f6f6f7",
+                        "background-dark": "#15161d",
+                        "gov-blue": "#005ea2",
+                        "gov-gray": "#71767a",
+                        "accent-blue": "#005ea2",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+
+        /* Markdown Styling */
+        .markdown-content h1 {
+            font-size: 2.5em;
+            color: transparent;
+            background-clip: text;
+            -webkit-background-clip: text;
+            background-image: linear-gradient(to right, #1b203b, #005ea2);
+            font-weight: 900;
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.75em;
+            color: #1b203b;
+            font-weight: 800;
+            margin-top: 1.75em;
+            margin-bottom: 0.75em;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.3em;
+            letter-spacing: -0.01em;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.35em;
+            color: #005ea2;
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown-content p {
+            margin-bottom: 1.25em;
+            line-height: 1.8;
+            color: #374151;
+            font-size: 1.1em;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .markdown-content ul {
+            list-style-type: disc;
+        }
+
+        .markdown-content ol {
+            list-style-type: decimal;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.5em;
+            line-height: 1.7;
+            color: #374151;
+            font-size: 1.1em;
+        }
+
+        .markdown-content li strong {
+            color: #1b203b;
+        }
+
+        .markdown-content strong {
+            color: #1b203b;
+            font-weight: 700;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #005ea2;
+            padding-left: 1.5em;
+            color: #4b5563;
+            font-style: italic;
+            margin-bottom: 1.5em;
+            background-color: #f0f9ff;
+            padding: 1.5em;
+            border-radius: 0 12px 12px 0;
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .markdown-content th,
+        .markdown-content td {
+            border: 1px solid #e5e7eb;
+            padding: 1em;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background-color: #f8fafc;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .markdown-content code {
+            background-color: #f1f5f9;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #c026d3;
+            font-family: monospace;
+        }
+
+        /* Print Specifics */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .markdown-content h1,
+            .markdown-content h2 {
+                color: black;
+                border-color: #000;
+            }
+        }
+
+        /* Dark Mode Markdown Overrides */
+        .dark .markdown-content h1 {
+            background-image: linear-gradient(to right, #ffffff, #60a5fa);
+        }
+
+        .dark .markdown-content h1,
+        .dark .markdown-content h2,
+        .dark .markdown-content h3,
+        .dark .markdown-content strong {
+            color: white;
+        }
+
+        .dark .markdown-content h3 {
+            color: #60a5fa;
+        }
+
+        .dark .markdown-content p,
+        .dark .markdown-content li {
+            color: #e2e8f0;
+            /* slate-200 */
+        }
+
+        .dark .markdown-content h2 {
+            border-bottom-color: #334155;
+            /* slate-700 */
+        }
+
+        .dark .markdown-content blockquote {
+            background-color: #1e293b;
+            /* slate-800 */
+            color: #94a3b8;
+            /* slate-400 */
+            border-left-color: #3b82f6;
+            /* blue-500 */
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.2);
+        }
+
+        .dark .markdown-content th {
+            background-color: #0f172a;
+            /* slate-900 */
+            color: white;
+        }
+
+        .dark .markdown-content th,
+        .dark .markdown-content td {
+            border-color: #334155;
+            /* slate-700 */
+        }
+
+        .dark .markdown-content code {
+            background-color: #334155;
+            /* slate-700 */
+            color: #e879f9;
+            /* fuchsia-400 */
+        }
+    </style>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+</head>
+
+<body
+    class="bg-gradient-to-br from-background-light via-blue-50 to-background-light dark:from-slate-900 dark:via-[#0b1021] dark:to-slate-900 animate-gradient-x text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-500 relative">
+
+    <!-- Decorative subtle background glow -->
+    <div class="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div
+            class="absolute top-1/4 -right-64 w-[500px] h-[500px] bg-accent-blue/5 dark:bg-accent-blue/10 rounded-full blur-[100px]">
+        </div>
+        <div
+            class="absolute bottom-1/4 -left-64 w-[400px] h-[400px] bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-[80px]">
+        </div>
+    </div>
+    <!-- Official Gov Banner Style -->
+    <div class="bg-[#f0f0f0] border-b border-gray-300 py-1 px-4 no-print">
+        <div class="max-w-5xl mx-auto flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-primary">account_balance</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-600">An official website of the Zynd
+                Civic Assistance Agent</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <header
+        class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-800/50 sticky top-0 z-50 no-print transition-colors shadow-sm">
+        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer"
+                onclick="window.location.href='{{ url_for('index') }}';">
+                <div class="bg-primary p-1.5 rounded text-white">
+                    <span class="material-symbols-outlined block">verified_user</span>
+                </div>
+                <h1 class="text-primary dark:text-white text-lg font-bold tracking-tight">Jan Sahayak</h1>
+            </div>
+            <nav class="flex items-center gap-6">
+                <a class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-blue-400 border-b-2 border-transparent hover:border-primary dark:hover:border-blue-400 py-5"
+                    href="{{ url_for('index') }}">Home</a>
+                <button onclick="toggleDarkMode()"
+                    class="w-9 h-9 flex items-center justify-center rounded-full text-slate-600 dark:text-yellow-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    title="Toggle Dark Mode">
+                    <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                    <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+                </button>
+                <button
+                    class="flex items-center gap-2 px-4 py-2 border border-primary dark:border-slate-600 text-primary dark:text-slate-300 rounded font-bold text-sm hover:bg-primary/5 dark:hover:bg-slate-800 transition-colors"
+                    onclick="window.print()">
+                    <span class="material-symbols-outlined text-sm">print</span>
+                    Print Results
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-12 px-6">
+        <div class="max-w-3xl mx-auto">
+            <!-- Hero Heading -->
+            <div class="mb-10">
+                <nav aria-label="Breadcrumb" class="flex mb-4 text-sm text-gov-gray">
+                    <ol class="flex items-center space-x-2">
+                        <li><a class="hover:underline" href="{{ url_for('index') }}">Home</a></li>
+                        <li><span class="material-symbols-outlined text-xs">chevron_right</span></li>
+                        <li class="font-bold text-primary">Analysis Results</li>
+                    </ol>
+                </nav>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-primary dark:text-white mb-4 tracking-tight">Your
+                    Personalized Analysis</h1>
+                <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                    Based on your profile and query, our AI agents have identified the following information for you.
+                </p>
+            </div>
+
+            <!-- Guidance Alert -->
+            <div
+                class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-gov-blue p-5 mb-8 rounded-r-lg flex gap-4 no-print">
+                <span class="material-symbols-outlined text-gov-blue dark:text-blue-400">info</span>
+                <div>
+                    <h3 class="font-bold text-gov-blue dark:text-blue-400 mb-1">Official Guidance Notice</h3>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 leading-normal">
+                        This automated tool provides preliminary guidance based on Digital India data. Always verify
+                        requirements with official government departments (e.g., UIDAI, State Govt Portals) before final
+                        submission.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div
+                class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800 rounded-3xl shadow-2xl p-8 md:p-12 mb-10 overflow-hidden relative z-10">
+                <!-- Watermark Logo Style -->
+                <div class="absolute top-8 right-8 opacity-[0.03] pointer-events-none">
+                    <span class="material-symbols-outlined text-[120px]">verified_user</span>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
+                        <p class="text-sm font-bold uppercase tracking-widest text-gov-gray">Reference ID: {{
+                            reference_id }}</p>
+                        <p class="text-xs text-slate-400">{{ note }}</p>
+                    </div>
+
+                    <!-- Hidden Raw Content for Safe Parsing -->
+                    <div id="raw-markdown" style="display: none;">{{ response }}</div>
+
+                    <!-- Rendered Markdown Container -->
+                    <div id="markdown-container" class="markdown-content"></div>
+                </div>
+
+                <div
+                    class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700 flex flex-col items-center no-print">
+                    <p class="text-gov-gray dark:text-slate-400 text-sm mb-6 font-medium">Need to refine your results or
+                        make changes?</p>
+                    <div class="flex flex-wrap gap-4 justify-center w-full sm:w-auto">
+                        <button
+                            class="w-full sm:w-auto min-w-[200px] bg-gradient-to-r from-accent-blue to-primary text-white font-bold py-4 px-8 rounded-xl hover:-translate-y-1 hover:shadow-lg hover:shadow-accent-blue/30 focus:outline-none focus:ring-4 focus:ring-accent-blue/50 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-300 flex items-center justify-center gap-2"
+                            onclick="window.history.back();">
+                            <span class="material-symbols-outlined">edit</span>
+                            Edit Inputs
+                        </button>
+                        <button
+                            class="w-full sm:w-auto min-w-[200px] border-2 border-slate-300 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md text-slate-700 dark:text-slate-200 font-bold py-4 px-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-400/50 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-300 flex items-center justify-center gap-2"
+                            onclick="window.location.href='{{ url_for('index') }}';">
+                            <span class="material-symbols-outlined">home</span>
+                            Back Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Simple Footer -->
+    <footer class="bg-primary text-white py-12 px-6 no-print">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-xs text-slate-400 max-w-2xl text-center md:text-left">
+                <p class="mb-2"><strong>Disclaimer:</strong> This is an automated civic assistance tool. Jan Sahayak is
+                    not a</p>
+                <p class="mb-2">substitute for official government advice.</p>
+                <p>© 2024 Jan Sahayak. Powered by Responsible AI.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center grayscale opacity-50">
+                    <span class="material-symbols-outlined">shield</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Render Markdown
+        document.addEventListener('DOMContentLoaded', () => {
+            const rawContainer = document.getElementById('raw-markdown');
+            const targetContainer = document.getElementById('markdown-container');
+            const md = window.markdownit({
+                html: true,
+                linkify: true,
+                typographer: true
+            });
+
+            // Get raw text from hidden div - preserves newlines and spacing better than innerText
+            if (rawContainer && targetContainer) {
+                const rawText = rawContainer.textContent;
+                targetContainer.innerHTML = md.render(rawText);
+            }
+        });
+    </script>
+</body>
+
+</html>

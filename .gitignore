@@ -68,3 +68,4 @@ htmlcov/
 .mypy_cache/
 advocacy.json
 logs/
+chroma_db/

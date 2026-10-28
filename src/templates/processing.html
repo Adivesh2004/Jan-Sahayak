@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Zynd Agent Processing State</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts: Public Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols Outlined -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b203b",
+                        "accent-blue": "#005EA2",
+                        "background-light": "#f6f6f7",
+                        "background-dark": "#15161d",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+
+        .step-transition {
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const formData = JSON.parse(localStorage.getItem('userFormData') || '{}');
+            const selectedOption = formData.selected_option || "{{ selected_option }}";
+
+            // Construct query from form data for the agent
+            // This is a simplified reconstruction. Ideally, the backend agent should handle raw inputs.
+            // For now, we create a prompt string based on what fields are present.
+            let query = "";
+            let userProfile = {};
+
+            // Build a generic query check
+            if (Object.keys(formData).length > 0) {
+                query = `User Request Type: ${selectedOption}\n\n`;
+                for (const [key, value] of Object.entries(formData)) {
+                    if (key !== 'selected_option') {
+                        query += `${key.replace(/_/g, ' ').toUpperCase()}: ${value}\n`;
+                    }
+                }
+                userProfile = formData;
+            } else {
+                query = "I need help with government services.";
+            }
+
+            try {
+                // Actual API Call (Streaming)
+                const response = await fetch("{{ url_for('submit_query') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        user_profile: userProfile,
+                        selected_option: selectedOption,
+                        collected_answers: formData
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                // Log container reference
+                const logContainer = document.getElementById('log-container');
+                logContainer.innerHTML = ""; // Clear initial message
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split("\n\n");
+                    buffer = lines.pop(); // Keep incomplete chunk
+
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                if (data.type === 'log') {
+                                    const logItem = document.createElement('div');
+                                    logItem.className = "flex items-center gap-2 text-slate-700 dark:text-slate-300 mb-1 animate-fadeIn";
+                                    logItem.innerHTML = `<span class="material-symbols-outlined text-xs">arrow_right</span><span>${data.message}</span>`;
+                                    logContainer.appendChild(logItem);
+                                    logContainer.scrollTop = logContainer.scrollHeight;
+                                }
+                                else if (data.type === 'result') {
+                                    logContainer.innerHTML += `<div class="mt-2 text-green-600 font-bold border-t pt-2">✓ Complete! Redirecting...</div>`;
+
+                                    // Store result
+                                    await fetch('/api/store_result', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            response: data.response,
+                                            reference_id: data.reference_id
+                                        })
+                                    });
+
+                                    // Redirect
+                                    setTimeout(() => {
+                                        window.location.href = data.url;
+                                    }, 1000);
+                                    return; // Stop processing
+                                }
+                                else if (data.type === 'error') {
+                                    throw new Error(data.message);
+                                }
+                            } catch (e) {
+                                console.error("Error parsing SSE data:", e);
+                            }
+                        }
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                const logContainer = document.getElementById('log-container');
+                logContainer.innerHTML += `<div class="mt-2 text-red-600 font-bold">❌ Error: ${error.message}</div>`;
+                alert("An error occurred while communicating with the agent: " + error.message);
+            }
+        });
+    </script>
+</head>
+
+<body
+    class="bg-gradient-to-br from-background-light via-blue-50 to-background-light dark:from-slate-900 dark:via-[#0b1021] dark:to-slate-900 animate-gradient-x text-slate-800 dark:text-slate-200 text-base md:text-lg leading-relaxed min-h-screen flex flex-col transition-colors duration-500">
+    <!-- Official Government Banner -->
+    <div class="bg-[#f0f0f0] border-b border-slate-200 py-1 px-4 md:px-10 text-[11px] flex items-center gap-2">
+        <div class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[10px] text-orange-500">circle</span>
+            <span class="font-bold text-slate-700">An official website of the Zynd Government</span>
+        </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <header
+        class="bg-primary/95 backdrop-blur-md text-white px-4 md:px-10 py-4 shadow-xl border-b border-white/10 relative z-20">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-1 rounded">
+                    <span class="material-symbols-outlined text-primary text-3xl font-bold">account_balance</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight leading-none uppercase">Jan Sahayak</h1>
+                    <p class="text-[10px] opacity-80 uppercase tracking-widest mt-0.5">Automated Analysis</p>
+                </div>
+            </div>
+
+            <button onclick="toggleDarkMode()"
+                class="w-9 h-9 flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors"
+                title="Toggle Dark Mode">
+                <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col items-center justify-center py-12 px-4 relative z-10 w-full overflow-hidden">
+        <!-- Background Ambient Glow -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-blue/10 dark:bg-accent-blue/20 rounded-full blur-[120px]">
+            </div>
+        </div>
+
+        <div class="max-w-2xl w-full relative z-10">
+            <!-- Pulsing Loader Graphic -->
+            <div class="flex justify-center mb-10">
+                <div class="relative w-24 h-24 flex items-center justify-center">
+                    <div
+                        class="absolute inset-0 border-4 border-transparent border-t-accent-blue dark:border-t-blue-400 rounded-full animate-spin">
+                    </div>
+                    <div class="absolute inset-2 border-4 border-transparent border-t-purple-500 dark:border-t-purple-400 rounded-full animate-spin-slow"
+                        style="animation-direction: reverse;"></div>
+                    <div
+                        class="absolute inset-0 bg-accent-blue/20 dark:bg-blue-500/20 rounded-full animate-pulse blur-md">
+                    </div>
+                    <span
+                        class="material-symbols-outlined text-4xl text-accent-blue dark:text-blue-400 animate-pulse relative z-10">smart_toy</span>
+                </div>
+            </div>
+
+            <!-- Processing Header -->
+            <div class="mb-10 text-center space-y-3">
+                <h2 class="text-4xl font-extrabold text-primary dark:text-white tracking-tight">Analyzing Request...
+                </h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-md mx-auto text-lg leading-relaxed">
+                    Jan Sahayak is coordinating with specialized agents to review your details and fetch the best
+                    results.
+                </p>
+            </div>
+
+            <!-- Log Container -->
+            <div class="w-full max-w-2xl mx-auto bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/40 dark:border-slate-700/50 p-6 font-mono text-sm h-72 overflow-y-auto shadow-2xl transition-all"
+                id="log-container">
+                <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-3 ml-2">
+                    <span class="w-2 h-2 rounded-full bg-accent-blue animate-pulse"></span>
+                    <span class="font-medium tracking-wide">Initializing secure connection...</span>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center flex flex-col items-center justify-center gap-2">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">lock</span>
+                    Secure Session Active
+                </p>
+                <p class="text-xs text-slate-400 dark:text-slate-500">Please do not close or refresh this window.</p>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
